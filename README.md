@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VoiceLoan
 
-## Getting Started
+Voice-first loan applications: a customer logs in, talks to a Deepgram voice agent in the browser, and we store only the useful fields in Supabase. Jev (TypeSafe) scores risk for admins. Recordings and transcripts are not saved.
 
-First, run the development server:
+## What gets stored
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Loan product (`bike`, `vehicle`, or `mobile`)
+- Amount, monthly income, job type, existing EMI
+- Jev risk level (`low` / `medium` / `high`) plus the selected option's probability
+- Admin approve / reject
+
+Audio and conversation text stay in the live browser session only.
+
+## Setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Fill in:
+   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `DEEPGRAM_API_KEY` (server only)
+   - `TYPESAFE_API_KEY` (server only, from [TypeSafe](https://docs.typesafe.ai/introduction/quickstart.md))
+3. In the Supabase dashboard, turn off **Confirm email** under Auth while you are testing, or complete the confirmation link.
+4. Create a customer account in the app, then promote an admin:
+
+```sql
+update public.profiles
+set role = 'admin'
+where email = 'you@example.com';
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Run `npm install` and `npm run dev`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The remote Supabase project for this workspace is `loan-agent` (`fmpwojpwrdmqsfpsyhns`). Schema is in `supabase/migrations`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How it works
 
-## Learn More
+- `/apply` uses `@deepgram/agents` with a short-lived token from `/api/deepgram-token`.
+- The agent calls `save_loan_application` with structured fields only.
+- `/admin` lists every application, sorted high → medium → low risk.
+- **Assess everyone** runs Jev via `@typesafe-ai/sdk` (`client.systemOne`) using questions in `lib/jev/loan-risk.ts`.
+- Approve and reject are human decisions; Jev never auto-decides.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Jev usage follows `.cursor/skills/jev/SKILL.md` and TypeSafe's official docs.
