@@ -45,6 +45,7 @@ function getClient() {
   return new TypeSafeClient({
     apiKey: process.env.TYPESAFE_API_KEY,
     defaultModel: JEV_MODEL,
+    timeout: 30_000,
   });
 }
 

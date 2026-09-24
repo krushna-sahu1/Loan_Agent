@@ -24,14 +24,23 @@ export function AdminBoard({ rows }: { rows: Row[] }) {
   async function assessAll() {
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/admin/assess", { method: "POST" });
-    const payload = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setError(payload.error ?? "Assessment failed");
-      return;
+    try {
+      const res = await fetch("/api/admin/assess", { method: "POST" });
+      const payload = (await res.json().catch(() => null)) as {
+        error?: string;
+        failed?: number;
+        assessed?: number;
+      } | null;
+      if (!res.ok) {
+        setError(payload?.error ?? "Assessment failed");
+        return;
+      }
+      router.refresh();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Assessment failed");
+    } finally {
+      setBusy(false);
     }
-    router.refresh();
   }
 
   async function decide(id: number, decision: "approved" | "rejected") {

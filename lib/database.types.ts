@@ -106,7 +106,16 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      save_loan_assessment: {
+        Args: {
+          p_id: number;
+          p_risk_level: string;
+          p_risk_probability: number;
+          p_jev_confidence: number;
+          p_jev_model: string;
+        };
+        Returns: Database["public"]["Tables"]["loan_applications"]["Row"];
+      };
     };
     Enums: {
       [_ in never]: never;

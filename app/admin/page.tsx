@@ -2,6 +2,8 @@ import { AdminBoard } from "@/app/admin/admin-board";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const supabase = await createClient();
   const {
